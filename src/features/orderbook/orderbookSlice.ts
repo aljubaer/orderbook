@@ -1,31 +1,18 @@
 import { createSlice } from "@reduxjs/toolkit";
 import { RootState } from '../../app/store';
-
-
+import { Orders } from "./OrderbookTypes";
 
 export type OrderbookState = {
-    market: string;
-    rawBids: number[][];
-    bids: number[][];
-    maxTotalBids: number;
-    rawAsks: number[][];
-    asks: number[][];
-    maxTotalAsks: number;
-    groupingSize: number;
+    bids: Orders;
+    asks: Orders;
   }
   
   const initialState: OrderbookState = {
-    market: 'PI_XBTUSD', // PI_ETHUSD
-    rawBids: [],
     bids: [],
-    maxTotalBids: 0,
-    rawAsks: [],
     asks: [],
-    maxTotalAsks: 0,
-    groupingSize: 0.5
   };
 
-  const addTotalSums = (orders: number[][]): number[][] => {
+  const addTotalSums = (orders: Orders): Orders => {
 
     let currSum = 0;
     return orders.map((order: number[], idx) => {
@@ -63,7 +50,7 @@ export type OrderbookState = {
 
 export const { updateOrderbook, updateBids, updateAsks } = orderbookSlice.actions;
 
-export const selectBids = (state: RootState): number[][] => state.orderbook.bids;
-export const selectAsks = (state: RootState): number[][] => state.orderbook.asks;
+export const selectBids = (state: RootState): Orders => state.orderbook.bids;
+export const selectAsks = (state: RootState): Orders => state.orderbook.asks;
 
 export default orderbookSlice.reducer;
