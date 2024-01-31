@@ -21,7 +21,7 @@ export default function OrderBook() {
   const { sendJsonMessage, getWebSocket } = useWebSocket(WSS_FEED_URL, {
     onOpen: () => console.log("WebSocket connection opened."),
     onClose: () => console.log("WebSocket connection closed."),
-    shouldReconnect: (closeEvent) => true,
+    shouldReconnect: () => true,
     onMessage: (event: WebSocketEventMap["message"]) => processMessages(event),
   });
 
