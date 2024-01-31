@@ -27,7 +27,6 @@ export type OrderbookState = {
 
   const addTotalSums = (orders: number[][]): number[][] => {
 
-    console.log(orders, "-------------")
     let currSum = 0;
     return orders.map((order: number[], idx) => {
       const size: number = order[1];
@@ -37,10 +36,6 @@ export type OrderbookState = {
         if (idx === 0) currSum = size;
         else currSum += size;
         order.push(currSum);
-        // const updatedLevel = [ ...order ];
-        // const totalSum: number = idx === 0 ? size : size + totalSums[idx - 1];
-        // updatedLevel[2] = totalSum;
-        // totalSums.push(totalSum);
         return order;
       }
     });
