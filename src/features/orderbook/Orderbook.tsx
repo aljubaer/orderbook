@@ -2,6 +2,17 @@ import useWebSocket from "react-use-websocket";
 import { WSS_FEED_URL } from "../../constants";
 import { useEffect, useState } from "react";
 
+type Bids = number[][];
+type Asks = number[][];
+
+type Delta = {
+    bids: Bids;
+    asks: Asks;
+}
+
+
+let currentBids: Bids = []
+let currentAsks: Asks = []
 
 export default function OrderBook() {
 
@@ -24,7 +35,28 @@ export default function OrderBook() {
             console.log(response);
         } else {
             //   process(response);
-            console.log(response);
+            // console.log(response);
+        }
+    };
+
+    const process = (data: Delta) => {
+        if (data?.bids?.length > 0) {
+            currentBids = [...currentBids, ...data.bids];
+
+            if (currentBids.length > 25) {
+                // dispatch(addBids(currentBids));
+                currentBids = [];
+                currentBids.length = 0;
+            }
+        }
+        if (data?.asks?.length >= 0) {
+            currentAsks = [...currentAsks, ...data.asks];
+
+            if (currentAsks.length > 25) {
+                // dispatch(addAsks(currentAsks));
+                currentAsks = [];
+                currentAsks.length = 0;
+            }
         }
     };
 
@@ -56,7 +88,56 @@ export default function OrderBook() {
         //   }
     });
 
-    return <>
+    return (
 
-    </>
+        <div className="flex w-[800px] border bg-table-bg text-white justify-center items-center">
+
+            <table className="border-none w-1/2">
+                <thead>
+                    <tr>
+                        <th className="border-none">Total</th>
+                        <th className="border-none">Size</th>
+                        <th className="border-none">Price</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td className="">Indiana</td>
+                        <td className="border border-slate-300 ...">Indianapolis</td>
+                    </tr>
+                    <tr>
+                        <td className="border border-slate-300 ...">Ohio</td>
+                        <td className="border border-slate-300 ...">Columbus</td>
+                    </tr>
+                    <tr>
+                        <td className="border border-slate-300 ...">Michigan</td>
+                        <td className="border border-slate-300 ...">Detroit</td>
+                    </tr>
+                </tbody>
+            </table>
+            <table className="border-none w-1/2">
+                <thead>
+                    <tr>
+                        <th className="border-none">Total</th>
+                        <th className="border-none">Size</th>
+                        <th className="border-none">Price</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td className="border border-slate-300 ...">Indiana</td>
+                        <td className="border border-slate-300 ...">Indianapolis</td>
+                    </tr>
+                    <tr>
+                        <td className="border border-slate-300 ...">Ohio</td>
+                        <td className="border border-slate-300 ...">Columbus</td>
+                    </tr>
+                    <tr>
+                        <td className="border border-slate-300 ...">Michigan</td>
+                        <td className="border border-slate-300 ...">Detroit</td>
+                    </tr>
+                </tbody>
+            </table>
+
+        </div>);
 }
