@@ -7,7 +7,8 @@ export default {
   theme: {
     extend: {
       colors: {
-        'table-bg': '#121723'
+        'table-bg': '#121723',
+        'table-header-color': '#89A6AC'
       }
     },
   },

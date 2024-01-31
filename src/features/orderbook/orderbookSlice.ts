@@ -25,11 +25,48 @@ export type OrderbookState = {
     groupingSize: 0.5
   };
 
+  const addTotalSums = (orders: number[][]): number[][] => {
+
+    console.log(orders, "-------------")
+    let currSum = 0;
+    return orders.map((order: number[], idx) => {
+      const size: number = order[1];
+      if (typeof order[2] !== 'undefined') {
+        return order;
+      } else {
+        if (idx === 0) currSum = size;
+        else currSum += size;
+        order.push(currSum);
+        // const updatedLevel = [ ...order ];
+        // const totalSum: number = idx === 0 ? size : size + totalSums[idx - 1];
+        // updatedLevel[2] = totalSum;
+        // totalSums.push(totalSum);
+        return order;
+      }
+    });
+  };
+
   export const orderbookSlice = createSlice({
     name: 'orderbook',
     initialState,
-    reducers: {}
+    reducers: {
+      updateBids: (state, { payload }) => {
+        state.bids = addTotalSums(payload);
+      },
+      updateAsks: (state, { payload }) => {
+        state.asks = addTotalSums(payload);
+      },
+      updateOrderbook: (state, { payload }) => {
+        const bids = addTotalSums(payload.bids);
+        const asks = addTotalSums(payload.asks);
+
+        state.bids = bids;
+        state.asks = asks;
+      }
+    }
   });
+
+export const { updateOrderbook, updateBids, updateAsks } = orderbookSlice.actions;
 
 export const selectBids = (state: RootState): number[][] => state.orderbook.bids;
 export const selectAsks = (state: RootState): number[][] => state.orderbook.asks;

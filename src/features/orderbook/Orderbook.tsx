@@ -1,143 +1,141 @@
 import useWebSocket from "react-use-websocket";
 import { WSS_FEED_URL } from "../../constants";
 import { useEffect, useState } from "react";
+import { useAppDispatch, useAppSelector } from "../../app/hooks";
+import { selectAsks, selectBids, updateAsks, updateBids, updateOrderbook } from "./orderbookSlice";
 
-type Bids = number[][];
-type Asks = number[][];
+type Orders = number[][];
 
-type Delta = {
-    bids: Bids;
-    asks: Asks;
-}
+const PRODUCT_IDS = ["PI_ETHUSD", "PI_XBTUSD"];
 
-
-let currentBids: Bids = []
-let currentAsks: Asks = []
+let currBids: Orders = [];
+let currAsks: Orders = [];
 
 export default function OrderBook() {
+  const [shouldKill, setShouldKill] = useState<boolean>(false);
+  const [toggle, setToggle] = useState<number>(0);
 
-    const [response, setResponse] = useState("Loading");
+//   const [currBids, setCurrbids] = useState<Orders>([]);
+//   const [currAsks, setCurrAsks] = useState<Orders>([]);
 
-    const { sendJsonMessage, getWebSocket } = useWebSocket(WSS_FEED_URL, {
-        onOpen: () => console.log('WebSocket connection opened.'),
-        onClose: () => console.log('WebSocket connection closed.'),
-        shouldReconnect: (closeEvent) => true,
-        onMessage: (event: WebSocketEventMap['message']) => processMessages(event)
-    })
+  const bids: Orders = useAppSelector(selectBids);
+  const asks: Orders = useAppSelector(selectAsks);
 
-    const processMessages = (event: { data: string; }) => {
-        const _response = JSON.parse(event.data);
+  const dispatch = useAppDispatch();
 
-        setResponse(_response);
+  const { sendJsonMessage, getWebSocket } = useWebSocket(WSS_FEED_URL, {
+    onOpen: () => console.log("WebSocket connection opened."),
+    onClose: () => console.log("WebSocket connection closed."),
+    shouldReconnect: (closeEvent) => true,
+    onMessage: (event: WebSocketEventMap["message"]) => processMessages(event),
+  });
 
-        if (_response.numLevels) {
-            //   dispatch(addExistingState(response));
-            console.log(response);
-        } else {
-            //   process(response);
-            // console.log(response);
+  const processMessages = (event: { data: string }) => {
+    const response = JSON.parse(event.data);
+
+    if (response.numLevels === 25) {
+      dispatch(updateOrderbook(response));
+    } else {
+        currBids = [...currBids, ...response.bids];
+        currAsks = [...currAsks, ...response.asks];
+        if (currBids.length > 25) {
+            dispatch(updateBids(currBids.slice(0, 25)));
+            currBids = [];
         }
-    };
-
-    const process = (data: Delta) => {
-        if (data?.bids?.length > 0) {
-            currentBids = [...currentBids, ...data.bids];
-
-            if (currentBids.length > 25) {
-                // dispatch(addBids(currentBids));
-                currentBids = [];
-                currentBids.length = 0;
-            }
+        if (currAsks.length > 25) {
+            dispatch(updateAsks(currAsks.slice(0, 25)));
+            currAsks = [];
         }
-        if (data?.asks?.length >= 0) {
-            currentAsks = [...currentAsks, ...data.asks];
+    }
+  };
 
-            if (currentAsks.length > 25) {
-                // dispatch(addAsks(currentAsks));
-                currentAsks = [];
-                currentAsks.length = 0;
-            }
-        }
-    };
+  useEffect(() => {
+    function connect() {
+      const unSubscribeMessage = {
+        event: "unsubscribe",
+        feed: "book_ui_1",
+        product_ids: [PRODUCT_IDS[1 - toggle]],
+      };
+      sendJsonMessage(unSubscribeMessage);
 
-    //   'PI_XBTUSD'
+      const subscribeMessage = {
+        event: "subscribe",
+        feed: "book_ui_1",
+        product_ids: [PRODUCT_IDS[toggle]],
+      };
+      sendJsonMessage(subscribeMessage);
+    }
 
-    useEffect(() => {
-        function connect(product: string) {
-            const unSubscribeMessage = {
-                event: 'unsubscribe',
-                feed: 'book_ui_1',
-                product_ids: ['PI_XBTUSD']
-            };
-            // sendJsonMessage(unSubscribeMessage);
+    if (shouldKill) {
+      getWebSocket()?.close();
+    } else {
+      connect();
+    }
+  }, [toggle, shouldKill]);
 
-            const subscribeMessage = {
-                event: 'subscribe',
-                feed: 'book_ui_1',
-                product_ids: ['PI_XBTUSD']
-            };
-            sendJsonMessage(subscribeMessage);
-        }
+  const handleToggle = () => {
+    setToggle((currToggle) => 1 - currToggle);
+  };
 
-        connect('PI_XBTUSD');
+  const killProcess = () => {
+    setShouldKill(!shouldKill);
+  }
 
-        //   if (isFeedKilled) {
-        //     getWebSocket()?.close();
-        //   } else {
-        //     connect(productId);
-        //   }
-    });
-
-    return (
-
-        <div className="flex w-[800px] border bg-table-bg text-white justify-center items-center">
-
-            <table className="border-none w-1/2">
-                <thead>
-                    <tr>
-                        <th className="border-none">Total</th>
-                        <th className="border-none">Size</th>
-                        <th className="border-none">Price</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td className="">Indiana</td>
-                        <td className="border border-slate-300 ...">Indianapolis</td>
-                    </tr>
-                    <tr>
-                        <td className="border border-slate-300 ...">Ohio</td>
-                        <td className="border border-slate-300 ...">Columbus</td>
-                    </tr>
-                    <tr>
-                        <td className="border border-slate-300 ...">Michigan</td>
-                        <td className="border border-slate-300 ...">Detroit</td>
-                    </tr>
-                </tbody>
-            </table>
-            <table className="border-none w-1/2">
-                <thead>
-                    <tr>
-                        <th className="border-none">Total</th>
-                        <th className="border-none">Size</th>
-                        <th className="border-none">Price</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td className="border border-slate-300 ...">Indiana</td>
-                        <td className="border border-slate-300 ...">Indianapolis</td>
-                    </tr>
-                    <tr>
-                        <td className="border border-slate-300 ...">Ohio</td>
-                        <td className="border border-slate-300 ...">Columbus</td>
-                    </tr>
-                    <tr>
-                        <td className="border border-slate-300 ...">Michigan</td>
-                        <td className="border border-slate-300 ...">Detroit</td>
-                    </tr>
-                </tbody>
-            </table>
-
-        </div>);
+  return (
+    <div className="bg-table-bg text-white p-2">
+      <div className="text-left">Order Book</div>
+      <div className="Market: ">{PRODUCT_IDS[toggle]}</div>
+      <div className="flex flex-wrap w-[800px] border justify-center items-center font-light">
+        <table className="border-none w-1/2">
+          <thead>
+            <tr className="text-table-header-color">
+              <th className="border-none">Total</th>
+              <th className="border-none">Size</th>
+              <th className="border-none">Price</th>
+            </tr>
+          </thead>
+          <tbody>
+            {bids.map((bid, idx) => (
+              <tr key={idx}>
+                <td className="w-1/3 m-0 p-0">{bid[2]}</td>
+                <td className="w-1/3 m-0 p-0">{bid[1]}</td>
+                <td className="w-1/3 m-0 p-0 text-right text-green-700">
+                  {bid[0]}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        <table className="border-none w-1/2">
+          <thead>
+            <tr className="text-table-header-color">
+              <th className="border-none">Price</th>
+              <th className="border-none">Size</th>
+              <th className="border-none">Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            {asks.map((ask, idx) => (
+              <tr key={idx}>
+                <td className="w-1/3 m-0 p-0 text-right text-red-700">
+                  {ask[0]}
+                </td>
+                <td className="w-1/3 m-0 p-0">{ask[1]}</td>
+                <td className="w-1/3 m-0 p-0">{ask[2]}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        <div></div>
+        <div className="flex">
+          <div className="bg-blue-700 p-2 mx-2 rounded border-2 border-blue-700 cursor-pointer" onClick={handleToggle}>
+            Toggle Feed
+          </div>
+          <div className="bg-red-700 p-2 mx-2 rounded border-2 border-red-700 cursor-pointer" onClick={killProcess}>
+            { shouldKill ? "Start Feed" : "Kill Feed" }
+          </div>
+        </div>
+      </div>
+    </div>
+  );
 }
