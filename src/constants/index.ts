@@ -1,0 +1,1 @@
+export const WSS_FEED_URL = 'wss://www.cryptofacilities.com/ws/v1';
